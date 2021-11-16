@@ -1,6 +1,39 @@
 pipeline {
 
+    environment
+	{
+		registry = "abdallahbe/time"
+		registryCredential= 'dockerHub'
+		dockerImage = ''
+	}
     agent any
+
+    stages {
+		stage('Cloning our Git') {
+			steps { 
+				git 'https://github.com/abdallahbe/time.git'
+			}
+		}
+		stage('Building our image') {
+			steps { 
+				script { 
+					dockerImage= docker.build registry + ":0.0.1" 
+				} 
+			}
+		}
+		stage('Deploy our image') {
+			steps { 
+				script { 
+					docker.withRegistry( '', registryCredential) { dockerImage.push() } 
+					} 
+				}
+		}
+		stage('Cleaning up') {
+			steps { 
+				bat "docker rmi $registry:0.0.1" 
+			}
+		}
+        
 
 
     stages {
