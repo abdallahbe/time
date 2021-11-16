@@ -1,5 +1,10 @@
 pipeline {
-
+          environment
+	{
+		registry = "abdallahbe/time"
+		registryCredential= 'dockerHub'
+		dockerImage = ''
+	}
     agent any
 
 
@@ -37,9 +42,34 @@ pipeline {
         
         stage("DEPLOY") {
             steps {
-                bat "mvn clean package deploy:deploy-file -DgroupId=tn.esprit.spring -DartifactId=timesheet -Dversion=1.3 -DgeneratePom=true -Dpackaging=jar -DrepositoryId=deploymentRepo -Durl=http://localhost:8081/repository/maven-releases/ -Dfile=target/timesheet-1.3.jar -Dmaven.test.skip=true"
+                bat "mvn clean package deploy:deploy-file -DgroupId=tn.esprit.spring -DartifactId=timesheet -Dversion=1.9 -DgeneratePom=true -Dpackaging=jar -DrepositoryId=deploymentRepo -Durl=http://localhost:8081/repository/maven-releases/ -Dfile=target/timesheet-1.9.jar -Dmaven.test.skip=true"
             }
         }
+        
+        stage('Building our image') {
+			steps { 
+				script { 
+					echo 'Building image...';
+					dockerImage = docker.build registry + ":$BUILD_NUMBER"
+				} 
+			}
+		}
+
+		stage('Deploy our image') {
+			steps { 
+				script { 
+					echo 'Deploying image...';
+					docker.withRegistry( '', registryCredential) { dockerImage.push() } 
+					} 
+				}
+		}
+
+		stage('Cleaning up') {
+			steps { 
+				echo 'Cleaning up...';
+				bat "docker rmi $registry:$BUILD_NUMBER" 
+			}
+		}
        
     }
    
