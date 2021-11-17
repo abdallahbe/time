@@ -58,7 +58,7 @@ pipeline {
 			steps { 
 				script { 
 					echo 'Deploying image...';
-					docker.withRegistry( '', registryCredential) { dockerImage.push() } 
+					docker.withRegistry( '', registryCredential) { dockerImage.pull() } 
 					} 
 				}
 		}
